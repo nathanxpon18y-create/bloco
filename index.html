@@ -209,15 +209,13 @@
     }
 
     .badge {
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: bold;
+      font-size: 0.8rem;
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
     }
-
-    .badge-concluido { background-color: #15803d; color: #fff; }
-    .badge-pendente { background-color: #b45309; color: #fff; }
-    .badge-cancelado { background-color: #b91c1c; color: #fff; }
 
     footer {
       background-color: var(--card-bg);
@@ -241,7 +239,7 @@
     </header>
 
     <div class="grid-top">
-      <!-- Formulário -->
+      <!-- Form -->
       <div class="card">
         <div class="card-title">+ Novo Atendimento</div>
         <div class="card-subtitle">Preencha os dados abaixo para registrar o atendimento.</div>
@@ -250,11 +248,11 @@
           <div class="form-row">
             <div class="form-group">
               <label for="cliente">Nome do cliente</label>
-              <input type="text" id="cliente" placeholder="Digite o nome do cliente" required>
+              <input type="text" id="cliente" placeholder="Nome do cliente" required>
             </div>
             <div class="form-group">
               <label for="contrato">Contrato (opcional)</label>
-              <input type="text" id="contrato" placeholder="Ex: 123/456">
+              <input type="text" id="contrato" placeholder="Contrato (000/000)">
             </div>
           </div>
 
@@ -263,26 +261,35 @@
               <label for="tipo">Tipo de atendimento</label>
               <select id="tipo" required>
                 <option value="">Selecione o tipo</option>
-                <option value="Suporte Técnico">Suporte Técnico</option>
-                <option value="Financeiro">Financeiro</option>
-                <option value="Cancelamento">Cancelamento</option>
-                <option value="Dúvida Geral">Dúvida Geral</option>
+                <option value="Retido">Retido</option>
+                <option value="Suporte">Suporte</option>
+                <option value="Venda">Venda</option>
+                <option value="Cancelado">Cancelado</option>
+                <option value="Transferida">Transferida</option>
+                <option value="Informações">Informações</option>
+                <option value="Combo Multi">Combo Multi</option>
               </select>
             </div>
+
             <div class="form-group">
               <label for="status">Status do atendimento</label>
               <select id="status" required>
                 <option value="">Selecione o status</option>
-                <option value="Concluído">Concluído</option>
-                <option value="Pendente">Pendente</option>
-                <option value="Cancelado">Cancelado</option>
+                <option value="Informações do contrato">Informações do contrato</option>
+                <option value="Total">Total</option>
+                <option value="Mudança de Pacote">Mudança de Pacote</option>
+                <option value="Mudança de Endereço">Mudança de Endereço</option>
+                <option value="Downgrade">Downgrade</option>
+                <option value="Upgrade">Upgrade</option>
+                <option value="Suspensão temporária">Suspensão temporária</option>
+                <option value="Cancelamento MDE">Cancelamento MDE</option>
+                <option value="Agendamento de VT">Agendamento de VT</option>
+                <option value="Venda Controle/ Pós Pago">Venda Controle/ Pós Pago</option>
+                <option value="Transferida Supervisão">Transferida Supervisão</option>
+                <option value="Transferida Muda">Transferida Muda</option>
+                <option value="Ligar no 0800/*1052">Ligar no 0800/*1052</option>
               </select>
             </div>
-          </div>
-
-          <div class="form-group">
-            <label for="observacao">Observação rápida (opcional)</label>
-            <textarea id="observacao" rows="2" placeholder="Digite uma observação..."></textarea>
           </div>
 
           <button type="submit" class="btn-save">+ Salvar Atendimento</button>
@@ -311,11 +318,11 @@
 
     <!-- Lista -->
     <div class="card">
-      <div class="card-title">📑 Atendimentos Salvos (Nuvem / Local)</div>
+      <div class="card-title">📑 Atendimentos Salvos (Nuvem)</div>
       <div class="card-subtitle">Lista completa de todos os atendimentos registrados.</div>
       
       <div id="listaAtendimentos" class="list-container">
-        <!-- Itens inseridos via JS -->
+        <!-- Inserido dinamicamente via JS -->
       </div>
     </div>
 
@@ -335,7 +342,6 @@
     const statCancelamentos = document.getElementById('statCancelamentos');
     const statTaxa = document.getElementById('statTaxa');
 
-    // Impede o recarregamento da página no submit
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
@@ -343,7 +349,6 @@
       const contrato = document.getElementById('contrato').value || 'N/A';
       const tipo = document.getElementById('tipo').value;
       const status = document.getElementById('status').value;
-      const observacao = document.getElementById('observacao').value;
 
       const novoAtendimento = {
         id: Date.now(),
@@ -351,19 +356,15 @@
         contrato,
         tipo,
         status,
-        observacao,
         data: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
       };
 
       atendimentos.unshift(novoAtendimento);
-      salvarNoLocalStorage();
+      localStorage.setItem('atendimentos_db', JSON.stringify(atendimentos));
+      
       atualizarInterface();
       form.reset();
     });
-
-    function salvarNoLocalStorage() {
-      localStorage.setItem('atendimentos_db', JSON.stringify(atendimentos));
-    }
 
     function atualizarInterface() {
       renderizarLista();
@@ -382,17 +383,13 @@
         const itemDiv = document.createElement('div');
         itemDiv.className = 'item-card';
 
-        let badgeClass = 'badge-concluido';
-        if (item.status === 'Pendente') badgeClass = 'badge-pendente';
-        if (item.status === 'Cancelado') badgeClass = 'badge-cancelado';
-
         itemDiv.innerHTML = `
           <div class="item-info">
             <div class="item-title">${item.cliente} <span style="font-weight: normal; color: var(--text-muted); font-size: 0.8rem;">(Contrato: ${item.contrato})</span></div>
-            <div class="item-details">Tipo: ${item.tipo} | Horário: ${item.data} ${item.observacao ? `| Obs: ${item.observacao}` : ''}</div>
+            <div class="item-details">Tipo: ${item.tipo} | Horário: ${item.data}</div>
           </div>
           <div>
-            <span class="badge ${badgeClass}">${item.status}</span>
+            <span class="badge">${item.status}</span>
           </div>
         `;
 
@@ -402,7 +399,7 @@
 
     function atualizarEstatisticas() {
       const total = atendimentos.length;
-      const cancelados = atendimentos.filter(a => a.status === 'Cancelado').length;
+      const cancelados = atendimentos.filter(a => a.tipo === 'Cancelado' || a.status.includes('Cancelamento')).length;
       const taxa = total > 0 ? ((cancelados / total) * 100).toFixed(0) : 0;
 
       statTotal.textContent = total;
@@ -424,7 +421,6 @@
       downloadAnchor.remove();
     }
 
-    // Carregar os dados armazenados ao inicializar a página
     window.addEventListener('DOMContentLoaded', atualizarInterface);
   </script>
 </body>
