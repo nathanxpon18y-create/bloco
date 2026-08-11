@@ -4,58 +4,195 @@
     <meta charset="UTF-8">
     <title>Registro de Atendimentos</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Ícones do FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SDKs do Firebase (Versão 12.17.1) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDi90mu5-qFMmiriYJbnywrUleloAjb89A",
+            authDomain: "painel-atendimentos-624bf.firebaseapp.com",
+            projectId: "painel-atendimentos-624bf",
+            storageBucket: "painel-atendimentos-624bf.firebasestorage.app",
+            messagingSenderId: "282414424655",
+            appId: "1:282414424655:web:08dab68e483e71bd1e803a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.colRef = collection(db, "atendimentos");
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+        window.updateDoc = updateDoc;
+
+        window.addEventListener('load', () => {
+            if (typeof carregarDadosDoBanco === 'function') {
+                carregarDadosDoBanco();
+            }
+        });
+    </script>
 </head>
-<body>
+<body class="dark-mode">
 
-    <h1>Registro de Atendimentos</h1>
+    <div class="container">
 
-    <!-- FORMULÁRIO -->
-    <form class="formulario" onsubmit="salvarAtendimento(); return false;">
-        <input type="text" id="cliente" placeholder="Nome do cliente" required>
-        <input type="text" id="contrato" placeholder="Contrato (000/000)" required>
-        <input type="hidden" id="data">
-<input type="hidden" id="horario">
+        <!-- CABEÇALHO -->
+        <header class="topo-cabecalho">
+            <div class="logo-titulo">
+                <i class="fa-solid fa-headset icon-logo"></i>
+                <h1>Registro de Atendimentos</h1>
+            </div>
+            <div class="acoes-topo">
+                <button class="btn-icone" id="btnAlternarTema" title="Alternar Tema" onclick="alternarTema()">
+                    <i class="fa-solid fa-moon" id="iconeTema"></i>
+                </button>
+                <button class="btn-exportar"><i class="fa-solid fa-download"></i> Exportar Relatório</button>
+            </div>
+        </header>
 
-        <select id="tipo">
-            <option>Venda</option>
-            <option>Suporte</option>
-            <option>Retido</option>
-            <option>Cancelado</option>
-            <option>Transferida</option>
-        </select>
-        <select id="status">
-            <option>Total</option>
-            <option>Parcial</option>
-            <option>Cancelamento MDE</option>
-            <option>Agendamento de VT</option>
-            <option>Venda Controle</option>
-            <option>Venda Pós Pago</option>
-            <option>Transferida Supervisão</option>
-            <option>Transferida Muda</option>
-            <option>Tansferida Purple </option>
-        </select>
-        <input type="text" id="obs" placeholder="Observação rápida">
-        <button type="submit">Salvar Atendimento</button>
-    </form>
+        <!-- GRID PRINCIPAL -->
+        <div class="painel-grid">
+            
+            <!-- COLUNA ESQUERDA: NOVO ATENDIMENTO -->
+            <div class="card-painel">
+                <div class="card-titulo">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <div>
+                        <h2>Novo Atendimento</h2>
+                        <p>Preencha os dados abaixo para registrar o atendimento.</p>
+                    </div>
+                </div>
 
-    <!-- ESTATÍSTICAS -->
-    <h2>Estatísticas</h2>
-    <div id="estatisticas" class="estatisticas">
-        <p>Total de Atendimentos: <span id="totalAtendimentos">0</span></p>
-        <p>Total de Cancelamentos: <span id="totalCancelamentos">0</span></p>
-        <p>Taxa de Cancelamento: <span id="taxaCancelamento">0%</span></p>
+                <form class="formulario" onsubmit="salvarAtendimento(); return false;">
+                    <div class="grupo-input">
+                        <label>Nome do cliente</label>
+                        <div class="input-com-icone">
+                            <i class="fa-regular fa-user"></i>
+                            <input type="text" id="cliente" placeholder="Digite o nome do cliente" required>
+                        </div>
+                    </div>
+
+                    <div class="grupo-input">
+                        <label>Contrato (000/000)</label>
+                        <div class="input-com-icone">
+                            <i class="fa-regular fa-file-lines"></i>
+                            <input type="text" id="contrato" placeholder="Ex: 123/456" required>
+                        </div>
+                    </div>
+
+                    <div class="grupo-input">
+                        <label>Tipo de atendimento</label>
+                        <select id="tipo">
+                            <option value="" disabled selected>Selecione o tipo</option>
+                            <option value="Retido">Retido</option>
+                            <option value="Suporte">Suporte</option>
+                            <option value="Venda">Venda</option>
+                            <option value="Cancelado">Cancelado</option>
+                            <option value="Transferida">Transferida</option>
+                            <option value="Informações">Informações</option>
+                            <option value="Combo Multi">Combo Multi</option>
+                        </select>
+                    </div>
+
+                    <div class="grupo-input">
+                        <label>Status do atendimento</label>
+                        <select id="status">
+                            <option value="" disabled selected>Selecione o status</option>
+                            <option>Informações do contrato</option>
+                            <option>Total</option>
+                            <option>Mudança de Pacote</option>
+                            <option>Mudança de Endereço</option>
+                            <option>Downgrade</option>
+                            <option>Upgrade</option>
+                            <option>Suspensão temporária</option>
+                            <option>Cancelamento MDE</option>
+                            <option>Agendamento de VT</option>
+                            <option>Venda Controle/ Pós Pago</option>
+                            <option>Transferida Supervisão</option>
+                            <option>Transferida Muda</option>
+                            <option>Ligar no 0800/*1052</option>
+                        </select>
+                    </div>
+
+                    <div class="grupo-input largura-total">
+                        <label>Observação rápida (opcional)</label>
+                        <div class="input-com-icone">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                            <input type="text" id="obs" placeholder="Digite uma observação...">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-salvar">
+                        <i class="fa-solid fa-plus"></i> Salvar Atendimento
+                    </button>
+                </form>
+            </div>
+
+            <!-- COLUNA DIREITA: ESTATÍSTICAS GERAIS -->
+            <div class="coluna-estatisticas">
+                <div class="card-painel">
+                    <div class="card-titulo">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <h2>Estatísticas Gerais</h2>
+                    </div>
+
+                    <div class="grid-estatisticas">
+                        <div class="stat-card stat-azul">
+                            <div class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-valor" id="totalAtendimentos">0</span>
+                                <span class="stat-legenda">Total de Atendimentos</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card stat-vermelho">
+                            <div class="stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-valor" id="totalCancelamentos">0</span>
+                                <span class="stat-legenda">Total de Cancelamentos</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card stat-verde">
+                            <div class="stat-icon"><i class="fa-solid fa-percent"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-valor" id="taxaCancelamento">0%</span>
+                                <span class="stat-legenda">Taxa de Cancelamento</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SEÇÃO INFERIOR: ATENDIMENTOS SALVOS (Substituiu o Bloco de Notas) -->
+        <div class="card-painel" style="margin-bottom: 20px;">
+            <div class="card-titulo">
+                <i class="fa-solid fa-list-check"></i>
+                <div>
+                    <h2>Atendimentos Salvos (Nuvem)</h2>
+                    <p>Lista completa de todos os atendimentos registrados.</p>
+                </div>
+            </div>
+            <div id="listaAtendimentos" class="lista-atendimentos-grande"></div>
+        </div>
+
+        <!-- RODAPÉ -->
+        <footer>
+            <span>Desenvolvido por <strong>Nathan Rocha</strong></span>
+            <span><i class="fa-solid fa-phone"></i> (82) 99371-7863</span>
+            <span><i class="fa-regular fa-envelope"></i> nathanxpon18y@gmail.com</span>
+        </footer>
+
     </div>
-
-    <!-- BLOCO DE NOTAS -->
-    <h2>Bloco de Anotações</h2>
-    <div id="blocoNotas" class="bloco-notas"></div>
-
-    <!-- RODAPÉ -->
-    <footer>
-        Desenvolvido por Nathan Rocha |
-        📞 <a href="tel:+5582993717863">(82) 99371-7863</a> |
-        📧 <a href="mailto:nathanxpon18y@gmail.com">nathanxpon18y@gmail.com</a>
-    </footer>
 
     <script src="script.js"></script>
 </body>
