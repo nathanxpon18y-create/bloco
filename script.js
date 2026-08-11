@@ -1,142 +1,171 @@
-// Variáveis globais para estatísticas
-let totalAtendimentos = 0;
-let totalCancelamentos = 0;
+document.addEventListener('DOMContentLoaded', () => {
+    carregarTemaSalvo();
+});
 
-function atualizarEstatisticas() {
-    document.getElementById('totalAtendimentos').textContent = totalAtendimentos;
-    document.getElementById('totalCancelamentos').textContent = totalCancelamentos;
-    const taxa = totalAtendimentos > 0 ? ((totalCancelamentos / totalAtendimentos) * 100).toFixed(2) : 0;
-    document.getElementById('taxaCancelamento').textContent = `${taxa}%`;
+// --- CONTROLE DE TEMA ---
+function alternarTema() {
+    const body = document.body;
+    const iconeTema = document.getElementById('iconeTema');
+
+    if (body.classList.contains('dark-mode')) {
+        body.classList.replace('dark-mode', 'light-mode');
+        iconeTema.classList.replace('fa-moon', 'fa-sun');
+        localStorage.setItem('nathan_temaSistema', 'light');
+    } else {
+        body.classList.replace('light-mode', 'dark-mode');
+        iconeTema.classList.replace('fa-sun', 'fa-moon');
+        localStorage.setItem('nathan_temaSistema', 'dark');
+    }
 }
 
-function salvarAtendimento(editando = false, notaEdit = null) {
-    const agora = new Date();
-    const dataAtual = agora.toISOString().split('T')[0];
-    const horaAtual = agora.toTimeString().split(' ')[0].slice(0,5);
+function carregarTemaSalvo() {
+    const temaSalvo = localStorage.getItem('nathan_temaSistema');
+    const body = document.body;
+    const iconeTema = document.getElementById('iconeTema');
 
-    const cliente = document.getElementById('cliente').value;
-    const contrato = document.getElementById('contrato').value;
+    if (temaSalvo === 'light') {
+        body.classList.replace('dark-mode', 'light-mode');
+        if (iconeTema) iconeTema.classList.replace('fa-moon', 'fa-sun');
+    } else {
+        body.classList.replace('light-mode', 'dark-mode');
+        if (iconeTema) iconeTema.classList.replace('fa-sun', 'fa-moon');
+    }
+}
+
+// --- FUNÇÕES DO BANCO DE DADOS (FIREBASE FIRESTORE) ---
+
+async function salvarAtendimento() {
+    const cliente = document.getElementById('cliente').value.trim();
+    const contrato = document.getElementById('contrato').value.trim();
     const tipo = document.getElementById('tipo').value;
     const status = document.getElementById('status').value;
-    const obs = document.getElementById('obs').value;
+    const obs = document.getElementById('obs').value.trim();
 
-    if (!cliente || !contrato) {
-        alert('Por favor, preencha todos os campos obrigatórios!');
+    if (!cliente || !contrato || !tipo || !status) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
         return;
     }
 
-    const data = dataAtual;
-    const horario = horaAtual;
+    const form = document.querySelector('.formulario');
+    const editId = form.dataset.editId;
 
-    const blocoNotas = document.getElementById('blocoNotas');
-    let nota = notaEdit;
+    try {
+        if (editId) {
+            const docRef = window.doc(window.db, "atendimentos", editId);
+            await window.updateDoc(docRef, { cliente, contrato, tipo, status, obs });
+            
+            delete form.dataset.editId;
+            form.querySelector('.btn-salvar').innerHTML = '<i class="fa-solid fa-plus"></i> Salvar Atendimento';
+        } else {
+            await window.addDoc(window.colRef, {
+                cliente,
+                contrato,
+                tipo,
+                status,
+                obs,
+                criadoEm: new Date().toISOString()
+            });
+        }
 
-    // Se não estiver editando, cria nova nota
-    if (!editando) {
-        nota = document.createElement('div');
-        nota.classList.add('registro-bloco');
+        form.reset();
+        carregarDadosDoBanco();
+    } catch (e) {
+        console.error("Erro ao salvar no Firebase: ", e);
+        alert("Erro ao salvar atendimento. Verifique a conexão.");
+    }
+}
 
-        // Botões de ação
-        const botoes = document.createElement('div');
-        botoes.classList.add('botao-acao');
+async function carregarDadosDoBanco() {
+    if (!window.db) return;
 
-        const btnEditar = document.createElement('button');
-        btnEditar.textContent = 'Editar';
-        btnEditar.classList.add('editar');
-        btnEditar.onclick = () => {
-            document.getElementById('cliente').value = cliente;
-            document.getElementById('contrato').value = contrato;
-            document.getElementById('tipo').value = tipo;
-            document.getElementById('status').value = status;
-            document.getElementById('obs').value = obs;
+    const lista = document.getElementById('listaAtendimentos');
+    lista.innerHTML = `<div class="sem-registros">Carregando da nuvem...</div>`;
 
-            // Ajusta estatísticas ao remover a nota
-            totalAtendimentos--;
-            if (tipo.toLowerCase() === 'cancelado') totalCancelamentos--;
-            atualizarEstatisticas();
+    try {
+        const querySnapshot = await window.getDocs(window.colRef);
+        let atendimentos = [];
 
-            blocoNotas.removeChild(nota);
+        querySnapshot.forEach((docSnap) => {
+            atendimentos.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        atendimentos.sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
+
+        let total = atendimentos.length;
+        let cancelados = atendimentos.filter(a => a.tipo === 'Cancelado').length;
+        let taxa = total > 0 ? ((cancelados / total) * 100).toFixed(2) : 0;
+
+        document.getElementById('totalAtendimentos').innerText = total;
+        document.getElementById('totalCancelamentos').innerText = cancelados;
+        document.getElementById('taxaCancelamento').innerText = taxa + '%';
+
+        lista.innerHTML = '';
+
+        if (total === 0) {
+            lista.innerHTML = `<div class="sem-registros">Nenhum atendimento registrado ainda.</div>`;
+            return;
+        }
+
+        const coresTipos = {
+            'Venda': '#3b82f6',
+            'Suporte': '#eab308',
+            'Retido': '#10b981',
+            'Cancelado': '#ef4444',
+            'Transferida': '#ec4899',
+            'Combo Multi': '#3b82f6',
+            'Informações': '#eab308'
         };
 
-        const btnApagar = document.createElement('button');
-        btnApagar.textContent = 'Apagar';
-        btnApagar.classList.add('apagar');
-        btnApagar.onclick = () => {
-            totalAtendimentos--;
-            if (tipo.toLowerCase() === 'cancelado') totalCancelamentos--;
-            atualizarEstatisticas();
-            blocoNotas.removeChild(nota);
-        };
+        atendimentos.forEach((a, index) => {
+            const corBorda = coresTipos[a.tipo] || '#8b5cf6';
 
-        botoes.appendChild(btnEditar);
-        botoes.appendChild(btnApagar);
-        nota.appendChild(botoes);
+            lista.innerHTML += `
+                <div class="registro-card" style="border-left-color: ${corBorda};">
+                    <div class="registro-topo">
+                        <span>#${index + 1} - ${a.cliente}</span>
+                        <span style="color: ${corBorda};">${a.tipo}</span>
+                    </div>
+                    <div class="registro-detalhes">
+                        <div>Contrato: <span>${a.contrato}</span></div>
+                        <div>Status: <span>${a.status}</span></div>
+                        ${a.obs ? `<div style="grid-column: span 2;">Obs: <span>${a.obs}</span></div>` : ''}
+                    </div>
+                    <div class="botoes-acao-card">
+                        <button type="button" onclick='editarAtendimento("${a.id}", ${JSON.stringify(a)})'>Editar</button>
+                        <button type="button" class="apagar-btn" onclick="apagarAtendimento('${a.id}')">Apagar</button>
+                    </div>
+                </div>
+            `;
+        });
 
-        blocoNotas.appendChild(nota);
+    } catch (e) {
+        console.error("Erro ao carregar dados: ", e);
+        lista.innerHTML = `<div class="sem-registros">Erro ao carregar dados do servidor.</div>`;
     }
+}
 
-    // Adiciona cor por tipo
-    switch (tipo.toLowerCase()) {
-        case 'retido': nota.classList.add('tipo-retido'); break;
-        case 'cancelado': nota.classList.add('tipo-cancelado'); break;
-        case 'suporte': nota.classList.add('tipo-suporte'); break;
-        case 'venda': nota.classList.add('tipo-venda'); break;
+async function apagarAtendimento(id) {
+    if (confirm('Deseja realmente apagar este atendimento da nuvem?')) {
+        try {
+            await window.deleteDoc(window.doc(window.db, "atendimentos", id));
+            carregarDadosDoBanco();
+        } catch (e) {
+            console.error("Erro ao apagar: ", e);
+            alert("Erro ao excluir registro.");
+        }
     }
+}
 
-    // Conteúdo do registro
-    nota.innerHTML = `
-        <span><strong>Cliente:</strong> ${cliente}</span>
-        <span><strong>Contrato:</strong> ${contrato}</span>
-        <span><strong>Data/Horário:</strong> ${data} ${horario}</span>
-        <span><strong>Tipo:</strong> ${tipo}</span>
-        <span><strong>Status:</strong> ${status}</span>
-        <span><strong>Obs:</strong> ${obs}</span>
-    `;
+function editarAtendimento(id, a) {
+    document.getElementById('cliente').value = a.cliente;
+    document.getElementById('contrato').value = a.contrato;
+    document.getElementById('tipo').value = a.tipo;
+    document.getElementById('status').value = a.status;
+    document.getElementById('obs').value = a.obs || '';
 
-    // Re-adiciona botões no final
-    const botoes = document.createElement('div');
-    botoes.classList.add('botao-acao');
-
-    const btnEditar = document.createElement('button');
-    btnEditar.textContent = 'Editar';
-    btnEditar.classList.add('editar');
-    btnEditar.onclick = () => {
-        document.getElementById('cliente').value = cliente;
-        document.getElementById('contrato').value = contrato;
-        document.getElementById('tipo').value = tipo;
-        document.getElementById('status').value = status;
-        document.getElementById('obs').value = obs;
-
-        totalAtendimentos--;
-        if (tipo.toLowerCase() === 'cancelado') totalCancelamentos--;
-        atualizarEstatisticas();
-
-        blocoNotas.removeChild(nota);
-    };
-
-    const btnApagar = document.createElement('button');
-    btnApagar.textContent = 'Apagar';
-    btnApagar.classList.add('apagar');
-    btnApagar.onclick = () => {
-        totalAtendimentos--;
-        if (tipo.toLowerCase() === 'cancelado') totalCancelamentos--;
-        atualizarEstatisticas();
-        blocoNotas.removeChild(nota);
-    };
-
-    botoes.appendChild(btnEditar);
-    botoes.appendChild(btnApagar);
-    nota.appendChild(botoes);
-
-    // Atualiza estatísticas
-    totalAtendimentos++;
-    if (tipo.toLowerCase() === 'cancelado') totalCancelamentos++;
-    atualizarEstatisticas();
-
-    // Limpa campos
-    document.getElementById('cliente').value = '';
-    document.getElementById('contrato').value = '';
-    document.getElementById('tipo').value = 'Venda';
-    document.getElementById('status').value = 'Retido';
-    document.getElementById('obs').value = '';
+    const form = document.querySelector('.formulario');
+    form.dataset.editId = id;
+    form.querySelector('.btn-salvar').innerHTML = '<i class="fa-solid fa-rotate"></i> Atualizar Atendimento';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
