@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Atendimentos</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,12 +12,12 @@
 
         <h1>Registro de Atendimentos</h1>
 
-        <!-- FORMULÁRIO -->
-        <form class="formulario" onsubmit="salvarAtendimento(); return false;">
-            <input type="text" id="cliente" placeholder="Nome do cliente">
-            <input type="text" id="contrato" placeholder="Contrato (000/000)">
+        <!-- FORMULÁRIO (sem onsubmit inline para não conflitar com JS) -->
+        <form class="formulario">
+            <input type="text" id="cliente" placeholder="Nome do cliente" required>
+            <input type="text" id="contrato" placeholder="Contrato (000/000)" required>
 
-            <select id="tipo">
+            <select id="tipo" required>
                 <option value="Retido">Retido</option>
                 <option value="Suporte">Suporte</option>
                 <option value="Venda">Venda</option>
@@ -26,7 +27,7 @@
                 <option value="Combo Multi">Combo Multi</option>
             </select>
 
-            <select id="status">
+            <select id="status" required>
                 <option>Informações do contrato</option>
                 <option>Total</option>
                 <option>Mudança de Pacote</option>
@@ -54,7 +55,7 @@
             <p>Taxa de Cancelamento: <span id="taxaCancelamento">0%</span></p>
         </div>
 
-        <!-- LISTA ONDE OS ATENDIMENTOS APARECEM (A Telinha) -->
+        <!-- LISTA ONDE OS ATENDIMENTOS APARECEM -->
         <h2>Atendimentos Salvos</h2>
         <div id="listaAtendimentos"></div>
 
