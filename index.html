@@ -1,199 +1,431 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Registro de Atendimentos</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Ícones do FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Atendimentos</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --input-bg: #0f172a;
+      --border-color: #334155;
+      --primary-color: #1d4ed8;
+      --primary-hover: #1e40af;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger-color: #ef4444;
+    }
 
-    <!-- SDKs do Firebase (Versão 12.17.1) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDi90mu5-qFMmiriYJbnywrUleloAjb89A",
-            authDomain: "painel-atendimentos-624bf.firebaseapp.com",
-            projectId: "painel-atendimentos-624bf",
-            storageBucket: "painel-atendimentos-624bf.firebasestorage.app",
-            messagingSenderId: "282414424655",
-            appId: "1:282414424655:web:08dab68e483e71bd1e803a"
-        };
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-        window.db = db;
-        window.colRef = collection(db, "atendimentos");
-        window.addDoc = addDoc;
-        window.getDocs = getDocs;
-        window.deleteDoc = deleteDoc;
-        window.doc = doc;
-        window.updateDoc = updateDoc;
+    header {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        window.addEventListener('load', () => {
-            if (typeof carregarDadosDoBanco === 'function') {
-                carregarDadosDoBanco();
-            }
-        });
-    </script>
+    header h1 {
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-export {
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .grid-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-top {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .card-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 15px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    input, select, textarea {
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary-color);
+    }
+
+    .btn-save {
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+
+    .btn-save:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .stat-box {
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .item-card {
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .item-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .item-details {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .badge-concluido { background-color: #15803d; color: #fff; }
+    .badge-pendente { background-color: #b45309; color: #fff; }
+    .badge-cancelado { background-color: #b91c1c; color: #fff; }
+
+    footer {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+  </style>
 </head>
-<body class="dark-mode">
+<body>
 
-    <div class="container">
+  <div class="container">
+    <header>
+      <h1>🎧 Registro de Atendimentos</h1>
+      <button class="btn-export" onclick="exportarRelatorio()">Exportar Relatório</button>
+    </header>
 
-        <!-- CABEÇALHO -->
-        <header class="topo-cabecalho">
-            <div class="logo-titulo">
-                <i class="fa-solid fa-headset icon-logo"></i>
-                <h1>Registro de Atendimentos</h1>
+    <div class="grid-top">
+      <!-- Formulário -->
+      <div class="card">
+        <div class="card-title">+ Novo Atendimento</div>
+        <div class="card-subtitle">Preencha os dados abaixo para registrar o atendimento.</div>
+        
+        <form id="formAtendimento">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cliente">Nome do cliente</label>
+              <input type="text" id="cliente" placeholder="Digite o nome do cliente" required>
             </div>
-            <div class="acoes-topo">
-                <button class="btn-icone" id="btnAlternarTema" title="Alternar Tema" onclick="alternarTema()">
-                    <i class="fa-solid fa-moon" id="iconeTema"></i>
-                </button>
-                <button class="btn-exportar"><i class="fa-solid fa-download"></i> Exportar Relatório</button>
+            <div class="form-group">
+              <label for="contrato">Contrato (opcional)</label>
+              <input type="text" id="contrato" placeholder="Ex: 123/456">
             </div>
-        </header>
+          </div>
 
-        <!-- GRID PRINCIPAL -->
-        <div class="painel-grid">
-            
-            <!-- COLUNA ESQUERDA: NOVO ATENDIMENTO -->
-            <div class="card-painel">
-                <div class="card-titulo">
-                    <i class="fa-solid fa-user-plus"></i>
-                    <div>
-                        <h2>Novo Atendimento</h2>
-                        <p>Preencha os dados abaixo para registrar o atendimento.</p>
-                    </div>
-                </div>
-
-                <form class="formulario" onsubmit="salvarAtendimento(); return false;">
-                    <div class="grupo-input">
-                        <label>Nome do cliente</label>
-                        <div class="input-com-icone">
-                            <i class="fa-regular fa-user"></i>
-                            <input type="text" id="cliente" placeholder="Digite o nome do cliente" required>
-                        </div>
-                    </div>
-
-                    <div class="grupo-input">
-                        <label>Contrato (000/000)</label>
-                        <div class="input-com-icone">
-                            <i class="fa-regular fa-file-lines"></i>
-                            <input type="text" id="contrato" placeholder="Ex: 123/456" required>
-                        </div>
-                    </div>
-
-                    <div class="grupo-input">
-                        <label>Tipo de atendimento</label>
-                        <select id="tipo">
-                            <option value="" disabled selected>Selecione o tipo</option>
-                            <option value="Retido">Retido</option>
-                            <option value="Suporte">Suporte</option>
-                            <option value="Venda">Venda</option>
-                            <option value="Cancelado">Cancelado</option>
-                            <option value="Transferida">Transferida</option>
-                            <option value="Informações">Informações</option>
-                            <option value="Combo Multi">Combo Multi</option>
-                        </select>
-                    </div>
-
-                    <div class="grupo-input">
-                        <label>Status do atendimento</label>
-                        <select id="status">
-                            <option value="" disabled selected>Selecione o status</option>
-                            <option>Informações do contrato</option>
-                            <option>Total</option>
-                            <option>Mudança de Pacote</option>
-                            <option>Mudança de Endereço</option>
-                            <option>Downgrade</option>
-                            <option>Upgrade</option>
-                            <option>Suspensão temporária</option>
-                            <option>Cancelamento MDE</option>
-                            <option>Agendamento de VT</option>
-                            <option>Venda Controle/ Pós Pago</option>
-                            <option>Transferida Supervisão</option>
-                            <option>Transferida Muda</option>
-                            <option>Ligar no 0800/*1052</option>
-                        </select>
-                    </div>
-
-                    <div class="grupo-input largura-total">
-                        <label>Observação rápida (opcional)</label>
-                        <div class="input-com-icone">
-                            <i class="fa-regular fa-pen-to-square"></i>
-                            <input type="text" id="obs" placeholder="Digite uma observação...">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-salvar">
-                        <i class="fa-solid fa-plus"></i> Salvar Atendimento
-                    </button>
-                </form>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tipo">Tipo de atendimento</label>
+              <select id="tipo" required>
+                <option value="">Selecione o tipo</option>
+                <option value="Suporte Técnico">Suporte Técnico</option>
+                <option value="Financeiro">Financeiro</option>
+                <option value="Cancelamento">Cancelamento</option>
+                <option value="Dúvida Geral">Dúvida Geral</option>
+              </select>
             </div>
-
-            <!-- COLUNA DIREITA: ESTATÍSTICAS GERAIS -->
-            <div class="coluna-estatisticas">
-                <div class="card-painel">
-                    <div class="card-titulo">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <h2>Estatísticas Gerais</h2>
-                    </div>
-
-                    <div class="grid-estatisticas">
-                        <div class="stat-card stat-azul">
-                            <div class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-valor" id="totalAtendimentos">0</span>
-                                <span class="stat-legenda">Total de Atendimentos</span>
-                            </div>
-                        </div>
-
-                        <div class="stat-card stat-vermelho">
-                            <div class="stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-valor" id="totalCancelamentos">0</span>
-                                <span class="stat-legenda">Total de Cancelamentos</span>
-                            </div>
-                        </div>
-
-                        <div class="stat-card stat-verde">
-                            <div class="stat-icon"><i class="fa-solid fa-percent"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-valor" id="taxaCancelamento">0%</span>
-                                <span class="stat-legenda">Taxa de Cancelamento</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="form-group">
+              <label for="status">Status do atendimento</label>
+              <select id="status" required>
+                <option value="">Selecione o status</option>
+                <option value="Concluído">Concluído</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
             </div>
+          </div>
 
+          <div class="form-group">
+            <label for="observacao">Observação rápida (opcional)</label>
+            <textarea id="observacao" rows="2" placeholder="Digite uma observação..."></textarea>
+          </div>
+
+          <button type="submit" class="btn-save">+ Salvar Atendimento</button>
+        </form>
+      </div>
+
+      <!-- Estatísticas -->
+      <div class="card">
+        <div class="card-title">📈 Estatísticas Gerais</div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-number" id="statTotal">0</div>
+            <div class="stat-label">Total de Atendimentos</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number" id="statCancelamentos">0</div>
+            <div class="stat-label">Total de Cancelamentos</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number" id="statTaxa">0%</div>
+            <div class="stat-label">Taxa de Cancelamento</div>
+          </div>
         </div>
-
-        <!-- SEÇÃO INFERIOR: ATENDIMENTOS SALVOS (Substituiu o Bloco de Notas) -->
-        <div class="card-painel" style="margin-bottom: 20px;">
-            <div class="card-titulo">
-                <i class="fa-solid fa-list-check"></i>
-                <div>
-                    <h2>Atendimentos Salvos (Nuvem)</h2>
-                    <p>Lista completa de todos os atendimentos registrados.</p>
-                </div>
-            </div>
-            <div id="listaAtendimentos" class="lista-atendimentos-grande"></div>
-        </div>
-
-        <!-- RODAPÉ -->
-        <footer>
-            <span>Desenvolvido por <strong>Nathan Rocha</strong></span>
-            <span><i class="fa-solid fa-phone"></i> (82) 99371-7863</span>
-            <span><i class="fa-regular fa-envelope"></i> nathanxpon18y@gmail.com</span>
-        </footer>
-
+      </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Lista -->
+    <div class="card">
+      <div class="card-title">📑 Atendimentos Salvos (Nuvem / Local)</div>
+      <div class="card-subtitle">Lista completa de todos os atendimentos registrados.</div>
+      
+      <div id="listaAtendimentos" class="list-container">
+        <!-- Itens inseridos via JS -->
+      </div>
+    </div>
+
+    <footer>
+      <div>Desenvolvido por <strong>Nathan Rocha</strong></div>
+      <div>📞 (82) 99371-7863</div>
+      <div>✉️ nathanxpon18y@gmail.com</div>
+    </footer>
+  </div>
+
+  <script>
+    let atendimentos = JSON.parse(localStorage.getItem('atendimentos_db')) || [];
+
+    const form = document.getElementById('formAtendimento');
+    const listaContainer = document.getElementById('listaAtendimentos');
+    const statTotal = document.getElementById('statTotal');
+    const statCancelamentos = document.getElementById('statCancelamentos');
+    const statTaxa = document.getElementById('statTaxa');
+
+    // Impede o recarregamento da página no submit
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const cliente = document.getElementById('cliente').value;
+      const contrato = document.getElementById('contrato').value || 'N/A';
+      const tipo = document.getElementById('tipo').value;
+      const status = document.getElementById('status').value;
+      const observacao = document.getElementById('observacao').value;
+
+      const novoAtendimento = {
+        id: Date.now(),
+        cliente,
+        contrato,
+        tipo,
+        status,
+        observacao,
+        data: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      atendimentos.unshift(novoAtendimento);
+      salvarNoLocalStorage();
+      atualizarInterface();
+      form.reset();
+    });
+
+    function salvarNoLocalStorage() {
+      localStorage.setItem('atendimentos_db', JSON.stringify(atendimentos));
+    }
+
+    function atualizarInterface() {
+      renderizarLista();
+      atualizarEstatisticas();
+    }
+
+    function renderizarLista() {
+      listaContainer.innerHTML = '';
+
+      if (atendimentos.length === 0) {
+        listaContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Nenhum atendimento registrado ainda.</p>';
+        return;
+      }
+
+      atendimentos.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'item-card';
+
+        let badgeClass = 'badge-concluido';
+        if (item.status === 'Pendente') badgeClass = 'badge-pendente';
+        if (item.status === 'Cancelado') badgeClass = 'badge-cancelado';
+
+        itemDiv.innerHTML = `
+          <div class="item-info">
+            <div class="item-title">${item.cliente} <span style="font-weight: normal; color: var(--text-muted); font-size: 0.8rem;">(Contrato: ${item.contrato})</span></div>
+            <div class="item-details">Tipo: ${item.tipo} | Horário: ${item.data} ${item.observacao ? `| Obs: ${item.observacao}` : ''}</div>
+          </div>
+          <div>
+            <span class="badge ${badgeClass}">${item.status}</span>
+          </div>
+        `;
+
+        listaContainer.appendChild(itemDiv);
+      });
+    }
+
+    function atualizarEstatisticas() {
+      const total = atendimentos.length;
+      const cancelados = atendimentos.filter(a => a.status === 'Cancelado').length;
+      const taxa = total > 0 ? ((cancelados / total) * 100).toFixed(0) : 0;
+
+      statTotal.textContent = total;
+      statCancelamentos.textContent = cancelados;
+      statTaxa.textContent = `${taxa}%`;
+    }
+
+    function exportarRelatorio() {
+      if (atendimentos.length === 0) {
+        alert('Não há dados para exportar!');
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(atendimentos, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "relatorio_atendimentos.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // Carregar os dados armazenados ao inicializar a página
+    window.addEventListener('DOMContentLoaded', atualizarInterface);
+  </script>
 </body>
 </html>
