@@ -2,20 +2,22 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
 body {
-    background-color: #0b0f19;
+    background-color: #0b0f17;
     color: #f8fafc;
-    padding: 30px 20px;
-    display: flex;
-    justify-content: center;
+    min-height: 100vh;
+    width: 100vw;
+    overflow-x: hidden;
+    padding: 20px;
 }
 
+/* Layout Dashboard Ocupando a Tela Toda */
 .container {
     width: 100%;
-    max-width: 900px;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -23,35 +25,50 @@ body {
 
 h1 {
     font-size: 1.8rem;
-    color: #f8fafc;
-    margin-bottom: 10px;
+    color: #38bdf8;
+    margin-bottom: 5px;
 }
 
 h2 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: #38bdf8;
-    margin-top: 10px;
+    margin-bottom: 12px;
 }
 
-/* Formulário */
+/* Grid Principal de 2 Colunas no Monitor */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Seção do Formulário e Estatísticas */
 .formulario {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    background: #1e293b;
+    background: #151c2c;
     padding: 20px;
     border-radius: 8px;
-    border: 1px solid #334155;
+    border: 1px solid #1e293b;
 }
 
 .formulario input, .formulario select {
-    padding: 10px 12px;
+    padding: 12px;
     border-radius: 6px;
-    border: 1px solid #334155;
-    background-color: #0f172a;
+    border: 1px solid #1e293b;
+    background-color: #0b0f17;
     color: #f8fafc;
     outline: none;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    width: 100%;
 }
 
 .formulario input:focus, .formulario select:focus {
@@ -59,14 +76,15 @@ h2 {
 }
 
 .formulario button[type="submit"] {
-    grid-column: span 1;
+    grid-column: span 2;
     background-color: #2563eb;
     color: white;
     font-weight: bold;
     cursor: pointer;
     border: none;
     border-radius: 6px;
-    padding: 10px;
+    padding: 12px;
+    font-size: 1rem;
     transition: background 0.2s;
 }
 
@@ -74,50 +92,73 @@ h2 {
     background-color: #1d4ed8;
 }
 
-/* Estatísticas */
+/* Estatísticas em Cards Expandidos */
 .estatisticas {
-    background: #1e293b;
+    background: #151c2c;
     padding: 15px 20px;
     border-radius: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    border: 1px solid #1e293b;
+    text-align: center;
+}
+
+.estatisticas p {
+    font-size: 0.85rem;
+    color: #94a3b8;
     display: flex;
-    justify-content: space-between;
-    border: 1px solid #334155;
-    font-size: 0.95rem;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .estatisticas span {
+    font-size: 1.4rem;
     font-weight: bold;
     color: #38bdf8;
 }
 
-/* Lista e Registros */
+/* Lista de Atendimentos Salvos com Scroll Interno */
 #listaAtendimentos {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+#listaAtendimentos::-webkit-scrollbar {
+    width: 6px;
+}
+
+#listaAtendimentos::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 4px;
 }
 
 .sem-registros {
     color: #94a3b8;
     font-size: 0.9rem;
-    background: #1e293b;
-    padding: 15px;
-    border-radius: 6px;
-    border: 1px dashed #334155;
+    background: #151c2c;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px dashed #1e293b;
+    text-align: center;
 }
 
 .registro-bloco {
-    background: #1e293b;
-    border-radius: 6px;
-    padding: 15px;
-    border-left: 5px solid #64748b;
+    background: #151c2c;
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 6px solid #64748b;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-    font-size: 0.9rem;
-    border-top: 1px solid #334155;
-    border-right: 1px solid #334155;
-    border-bottom: 1px solid #334155;
+    font-size: 0.92rem;
+    border-top: 1px solid #1e293b;
+    border-right: 1px solid #1e293b;
+    border-bottom: 1px solid #1e293b;
 }
 
 .linha-completa {
@@ -127,11 +168,11 @@ h2 {
 .atendimento-numero {
     font-weight: bold;
     color: #38bdf8;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid #1e293b;
     padding-bottom: 6px;
 }
 
-/* Cores por tipo */
+/* Cores dos Cards */
 .tipo-venda { border-left-color: #1976d2; }
 .tipo-suporte { border-left-color: #fbc02d; }
 .tipo-retido { border-left-color: #4CAF50; }
@@ -147,7 +188,7 @@ h2 {
 }
 
 .botao-acao button {
-    padding: 6px 12px;
+    padding: 6px 14px;
     border-radius: 4px;
     border: none;
     cursor: pointer;
@@ -160,13 +201,14 @@ h2 {
 
 /* Bloco de Anotações */
 .bloco-notas {
-    background: #1e293b;
-    min-height: 120px;
-    padding: 12px;
-    border-radius: 6px;
-    border: 1px solid #334155;
+    background: #151c2c;
+    min-height: 140px;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #1e293b;
     color: #f8fafc;
     outline: none;
+    font-size: 0.95rem;
 }
 
 .bloco-notas:focus {
@@ -176,24 +218,24 @@ h2 {
 /* Legenda */
 .legenda-container {
     display: flex;
-    gap: 15px;
+    gap: 20px;
     flex-wrap: wrap;
     font-size: 0.85rem;
-    background: #1e293b;
-    padding: 12px 15px;
-    border-radius: 6px;
-    border: 1px solid #334155;
+    background: #151c2c;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 1px solid #1e293b;
 }
 
 .legenda-item {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .bola {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     display: inline-block;
 }
@@ -203,11 +245,11 @@ footer {
     text-align: center;
     font-size: 0.85rem;
     color: #94a3b8;
-    margin-top: 20px;
-    background: #1e293b;
-    padding: 12px;
-    border-radius: 6px;
-    border: 1px solid #334155;
+    background: #151c2c;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid #1e293b;
+    margin-top: 10px;
 }
 
 footer a {
